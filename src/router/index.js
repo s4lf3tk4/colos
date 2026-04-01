@@ -1,16 +1,24 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import HomePage from '../views/HomePage.vue'
+import AuthCard from '../views/AuthCard.vue'
 
 const routes = [
   {
     path: '/',
-    name: 'Home',
-    component: HomePage
+    name: 'AuthCard',
+     component: () => import('../views/AuthCard.vue'),
+      meta: {
+       transition: 'slide',
+      transitionDelay: 100
+    }
   },
   {
     path: '/register',
     name: 'Register',
-    component: () => import('../views/RegisterPage.vue')
+    component: () => import('../views/RegisterPage.vue'),
+     meta: {
+       transition: 'slide',
+      transitionDelay: 100
+    }
   }
 ]
 

@@ -12,7 +12,7 @@
   height: 70px;
   background: white;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   position: relative;
   padding: 0 24px;
@@ -34,4 +34,9 @@
   background: linear-gradient(135deg, #0a800a, #1e3a1e);
   -webkit-background-clip: text;
   color: transparent;
+  position: static;
+  transform: none;
+}
+body {
+  padding-top: 70px;
 }

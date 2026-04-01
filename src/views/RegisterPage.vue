@@ -1,11 +1,6 @@
 <template>
   <div>
-    <div class="band-header">
-      <header class="site-header">
-        <h1>Colos - simple food analisys</h1>
-      </header>
-    </div>
-
+    
     <div class="auth-container">
       <div class="auth-card">
         <div class="card-icon">
@@ -13,6 +8,11 @@
         </div>
         <div class="auth-title">Регистрация</div>
         <div class="auth-sub">Создайте аккаунт для анализа питания</div>
+
+        <!-- ✅ Улучшенное отображение сообщений -->
+        <div v-if="message" :class="['message', messageType]">
+          {{ message }}
+        </div>
 
         <form class="auth-form" @submit.prevent="handleRegister">
           <div class="input-group">
@@ -23,6 +23,7 @@
               v-model="formData.name"
               placeholder="Ваше имя" 
               required
+              :disabled="loading"
             >
           </div>
           
@@ -34,6 +35,7 @@
               v-model="formData.email"
               placeholder="example@mail.com" 
               required
+              :disabled="loading"
             >
           </div>
           
@@ -46,6 +48,7 @@
                 v-model="formData.password"
                 placeholder="Минимум 6 символов" 
                 required
+                :disabled="loading"
               >
               <span 
                 @click="showPassword = !showPassword"
@@ -65,6 +68,7 @@
                 v-model="confirmPassword"
                 placeholder="Повторите пароль" 
                 required
+                :disabled="loading"
               >
               <span 
                 @click="showConfirmPassword = !showConfirmPassword"
@@ -77,14 +81,14 @@
           
           <div class="terms-group" style="margin: 0.5rem 0;">
             <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem;">
-              <input type="checkbox" v-model="agreeTerms" required style="width: 18px; height: 18px;">
+              <input type="checkbox" v-model="agreeTerms" required style="width: 18px; height: 18px;" :disabled="loading">
               <span>Я согласен с <a href="#" @click.prevent="showTerms" style="color: #4c7a3a;">условиями использования</a></span>
             </label>
           </div>
           
           <div class="button-group">
             <button type="submit" class="auth-btn register-submit-btn" :disabled="loading">
-              <span>✅</span> 
+              <span>{{ loading ? '⏳' : '✅' }}</span> 
               {{ loading ? 'Регистрация...' : 'Зарегистрироваться' }}
             </button>
             
@@ -94,10 +98,6 @@
             </button>
           </div>
         </form>
-        
-        <div v-if="message" class="auth-message" :class="{ success: messageType === 'success' }">
-          {{ message }}
-        </div>
       </div>
     </div>
   </div>
@@ -119,13 +119,15 @@ export default {
       showConfirmPassword: false,
       loading: false,
       message: '',
-      messageType: ''
+      messageType: '',
+      response: null  // ✅ исправлено: response вместо responce
     }
   },
   methods: {
-    handleRegister() {
-      this.message = '';
+    async handleRegister() {
+      this.response = null;
       
+      // Валидация
       if (!this.formData.name.trim()) {
         this.showMessage('❌ Введите имя пользователя', 'error');
         return;
@@ -166,26 +168,67 @@ export default {
         this.showMessage('❌ Необходимо согласиться с условиями использования', 'error');
         return;
       }
+
+      // ✅ Исправлено: создаем params правильно
+      const params = new URLSearchParams();
+      params.append('name', this.formData.name);
+      params.append('email', this.formData.email);
+      params.append('password', this.formData.password);
       
       this.loading = true;
       
-      setTimeout(() => {
-        this.loading = false;
-        this.showMessage('✅ Регистрация успешна! Теперь вы можете войти в систему.', 'success');
-        
-        const users = JSON.parse(localStorage.getItem('users') || '[]');
-        users.push({
-          name: this.formData.name,
-          email: this.formData.email,
-          password: this.formData.password
+      try {
+        const fetchResponse = await fetch('http://localhost/colos/php_mysql.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: params
         });
-        localStorage.setItem('users', JSON.stringify(users));
         
-        setTimeout(() => {
-          this.goBack();
-        }, 2000);
-      }, 1500);
+        if (!fetchResponse.ok) {
+          throw new Error(`HTTP ошибка: ${fetchResponse.status}`);
+        }
+        
+        const data = await fetchResponse.json();
+        this.response = data;  // ✅ исправлено: сохраняем в response
+        
+        if (data.status === 'success') {
+          this.showMessage(data.message || '✅ Регистрация успешна!', 'success');
+          
+          this.formData = { name: '', email: '', password: '' };
+          this.confirmPassword = '';
+          this.agreeTerms = false;
+            setTimeout(() => {
+            this.$router.push('/')
+            }, 500);
+          
+        } else {
+          this.showMessage(data.message || '❌ Ошибка регистрации', 'error');
+        }
+        
+      } catch (error) {
+        console.error('Ошибка:', error);
+        
+        let errorMessage = '❌ Ошибка соединения с сервером';
+        if (error.message.includes('Failed to fetch')) {
+          errorMessage = '❌ Не удалось подключиться к серверу. Проверьте: 1) Сервер запущен 2) Путь к файлу правильный';
+        } else if (error.message.includes('JSON')) {
+          errorMessage = '❌ Сервер вернул некорректный ответ. Проверьте PHP код на наличие ошибок.';
+        } else {
+          errorMessage = `❌ Ошибка: ${error.message}`;
+        }
+        
+        this.showMessage(errorMessage, 'error');
+        
+      } finally {
+        this.loading = false;
+      }
     },
+    showMessage(text, type) {
+    this.message = text;
+    this.messageType = type;
+  },
     
     goBack() {
       this.$router.push('/');
@@ -194,21 +237,12 @@ export default {
     showTerms() {
       alert('Условия использования:\n\n1. Используйте сервис ответственно\n2. Не передавайте свои данные третьим лицам\n3. Мы не несем ответственности за результаты анализа\n\nНажимая "Зарегистрироваться", вы соглашаетесь с этими условиями.');
     },
-    
-    showMessage(text, type) {
-      this.message = text;
-      this.messageType = type;
-      
-      setTimeout(() => {
-        if (this.message === text) {
-          this.message = '';
-        }
-      }, 3000);
-    }
   }
 }
 </script>
 
 <style scoped>
+@import '@/assets/styles/header.css';
 @import '@/assets/styles/auth-card.css';
+@import'@/assets/styles/message.css';
 </style>

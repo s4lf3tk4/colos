@@ -1,16 +1,16 @@
 <template>
   <div id="app">
-        <div class="band-header">
+    <div class="band-header">
       <header class="site-header">
         <h1>Colos - simple food analysis</h1>
       </header>
     </div>
-    <transition 
-      :name="'fade'"
-      mode="in-out"
-    >
-      <router-view />
-    </transition>
+    
+    <router-view v-slot="{ Component }">
+      <transition name="fade" mode="out-in">
+        <component :is="Component" />
+      </transition>
+    </router-view>
   </div>
 </template>
 

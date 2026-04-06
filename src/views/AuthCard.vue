@@ -44,6 +44,9 @@
             <span>🔑</span>     
             Регистрация
           </button>
+          <!-- <button @click="goForward">
+            НА СТРАНИЦУ
+          </button> -->
         </div>
       </form>
       
@@ -57,6 +60,7 @@ export default {
   name: 'AuthCard',
   data() {
     return {
+      
       response: null,
       formData: {
         username: '',
@@ -64,10 +68,23 @@ export default {
       },
       loading: false,
       message: '',
-      messageType: ''
+      messageType: '',
+      
     }
   },
   methods: {
+      async goForward(){
+        // const url = 'http://localhost/colos/login.php';
+        
+        // const fetchResponse = await fetch(url, {
+        //   method: 'GET',
+        //   credentials: 'include',
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   }
+        // });
+    this.$router.push('/mainpage');
+  },
     registrate() {
       this.$router.push('/register');
     },
@@ -96,7 +113,9 @@ export default {
           method: 'POST',
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
+            
           },
+          credentials: 'include',
           body: params
         });
         
@@ -108,18 +127,25 @@ export default {
         this.response = data; 
         
         if (data.status === 'success') {
-          this.showMessage(data.message || '✅ Успешный вход!', 'success');
-          
-          // Сохраняем данные пользователя
-          localStorage.setItem('user', JSON.stringify({
-            username: this.formData.username,
-            loggedIn: true
-          }));
-          
-          // Очищаем форму
-          this.formData = { username: '', password: '' };
-          
+            this.formData = { username: '', password: '' };
+            this.showMessage(data.message || '✅ Успешный вход!', 'success');
+            try{
+            
+              const link = document.createElement('link');
+              link.rel = 'prefetch';
+              link.href = '/mainpage';
+              document.head.appendChild(link);
 
+
+            
+          }
+          catch(error){
+            this.showMessage(data.message || 'НЕ Успешный вход!', 'error');
+          }
+          setTimeout(() => {
+                  this.$router.push('/mainpage');
+              }, 500);
+          
           
         } else {
           this.showMessage(data.message || '❌ Ошибка авторизации', 'error');

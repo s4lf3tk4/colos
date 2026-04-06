@@ -19,6 +19,15 @@ const routes = [
        transition: 'slide',
       transitionDelay: 100
     }
+  },
+  {
+    path: '/mainpage',
+    name: 'MainPage',
+    component: () => import('../views/MainPage.vue'),
+     meta: {
+       transition: 'slide',
+      transitionDelay: 100
+    }
   }
 ]
 

@@ -72,6 +72,9 @@ export default {
       
     }
   },
+  async mounted() {
+    await this.check_auth();
+  },
   methods: {
       async goForward(){
         // const url = 'http://localhost/colos/login.php';
@@ -83,11 +86,47 @@ export default {
         //     'Content-Type': 'application/json',
         //   }
         // });
-    this.$router.push('/mainpage');
+    this.$router.push('/workpage');
   },
+
+ async check_auth() {
+      try {
+        const url = 'http://localhost/colos/check_auth.php';
+        
+        const fetchResponse = await fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+          
+        });
+        
+        const textResponse = await fetchResponse.text();
+        try {
+          const jsonData = JSON.parse(textResponse);
+          this.response = jsonData;
+          if (jsonData.auth === true) {
+            setTimeout(() => {
+                    this.$router.push('/workpage');
+                  }, 500);
+          }
+        } catch (e) {
+          console.log("нет активной сессии")
+        }
+        this.error = null;
+      } catch (err) {
+        console.error('Ошибка запроса:', err);
+      }
+    },
     registrate() {
       this.$router.push('/register');
     },
+async isloadedForward() {
+    const component = await import('../views/WorkPage.vue');
+    
+    return true;
+  },
     
     async handleLogin() {
       this.response = null;
@@ -130,21 +169,20 @@ export default {
             this.formData = { username: '', password: '' };
             this.showMessage(data.message || '✅ Успешный вход!', 'success');
             try{
-            
-              const link = document.createElement('link');
-              link.rel = 'prefetch';
-              link.href = '/mainpage';
-              document.head.appendChild(link);
 
-
-            
+            const loaded = await this.isloadedForward();
+            if (loaded === true){
+                  setTimeout(() => {
+                    this.$router.push('/workpage');
+                  }, 500);
+            }
+         
           }
+
           catch(error){
             this.showMessage(data.message || 'НЕ Успешный вход!', 'error');
           }
-          setTimeout(() => {
-                  this.$router.push('/mainpage');
-              }, 500);
+
           
           
         } else {

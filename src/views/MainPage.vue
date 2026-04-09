@@ -1,264 +1,248 @@
 <template>
- <div class="main-page">
-  <div class="band-header">
-      <header class="site-header">
-        <div v-if="response && response.auth === true">
-        <h1> Hello, {{ response.username }}!</h1>
-        </div>
-      </header>
-    </div>
-    
   <div class="auth-container">
-    <div class="auth-card">
-      <div class="file-upload-minimal">
-        <label class="file-label">
-          <input
-            type="file"
-            ref="fileInput"
-            @change="handleFileUpload"
-            class="file-input"
-          />
-          <div class="file-label-content">
-            <span class="file-icon">📎</span>
-            <span class="file-text">{{ fileName || 'Выберите картинку' }}</span>
-            <span class="file-browse">Обзор</span>
-          </div>
-        </label>
-      </div>
+    <div class="auth-card horizontal-card">
+      <div class="auth-title">✅ Colos - использование лучшего ПО для персонализированного питания</div>
       
-      <div class="button-group">
-        <button type="submit" @click="senasdGetRequest()" class="auth-btn register-submit-btn" :disabled="loading">
-          <span>{{ loading ? '⏳' : '✅' }}</span> 
-          {{ loading ? 'Анализируем...' : 'Получить анализ' }}
-
-        </button>
+      <div class="content-wrapper horizontal-content">
+        <img src="/src/images/example1.jpg" alt="Пример анализа питания" class="example-image-horizontal">
+        <h2 class="description-text-horizontal">Мы предоставляем возможность персонализированного питания на базе обучаемого отечественного искусственного интеллекта на базе детектора yoloV11, классификатора еды efficientNet, на базе usdaFoodData и запуск на мощном ResNet50 🤓</h2>
       </div>
-        <div>
-        {{ responseAnalysis}}
-                  <button @click="goPy">
-            Отправить
-          </button>
-          {{ responsePy}}
-      </div>    
     </div>
   </div>
-</div>
 
+  <div class="auth-container">
+    <div class="auth-card horizontal-card">
+      <div class="auth-title">✅ Colos - интуитивное использование без лишних вопросов</div>
+      
+      <div class="content-wrapper horizontal-content">
+        <div class="text-group">
+          <h2 class="description-text-horizontal">Пользование нашего анализатора не подразумевает лишних заморочек</h2>
+          <h2 class="description-text-horizontal highlight">сделать фотографию 👉 отправить 👉 получить анализ🥳</h2>
+          <h2 class="description-text-horizontal">Все легко и просто, не требует особых знаний и самостоятельных расчетов! Мы сделаем все за вас 🤗</h2>
+           <div class="button-group">
+     </div>
+     <button type="submit" class="auth-btn login-btn" :disabled="loading">
+            <span>🔐</span> 
+             Начать сейчас
+          </button>
+        </div>
+        <img src="/src/images/example1.png" alt="Пример анализа питания" class="example-image-horizontal">
+      </div>
+    </div>
+  </div>
 </template>
-
 
 <script>
 export default {
+  name: 'AuthCard',
   data() {
     return {
-      response: null,
-      error: null,
       loading: false,
-      selectedFile: null,
-      fileName: '',
-      responseAnalysis: null,
-      responsePy: null
     }
   },
-  async mounted() {
-    await this.check_auth();
-  },
   methods: {
-    async goPy() {
-        const url = 'http://localhost/colos/bridge.php';
-        
-        try {
-            const fetchResponse = await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({text: 'Привет из Vue!'})
-            });
-
-            const text = await fetchResponse.text();
-            let jsonData;
-            try {
-                jsonData = JSON.parse(text);
-            } catch(e) {
-                this.responsePy = 'Ошибка: не JSON';
-                return;
-            }
-            
-            if (jsonData && jsonData.reply) {
-                this.responsePy = jsonData.reply;
-            } else {
-                this.responsePy = 'Ошибка: нет reply';
-            }
-            
-        } catch (error) {
-            console.error('❌ Ошибка в catch:', error);
-            this.responsePy = 'Ошибка: ' + error.message;
-        }
+    async isloadedForward() {
+      const component = await import('../views/AuthCard.vue');
+      return true;
     },
-    async check_auth() {
-      try {
-        const url = 'http://localhost/colos/check_auth.php';
-        
-        const fetchResponse = await fetch(url, {
-          method: 'GET',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-          
-        });
-        
-        const textResponse = await fetchResponse.text();
-        try {
-          const jsonData = JSON.parse(textResponse);
-          this.response = jsonData;
-          
-          if (jsonData.auth === false) {
-            setTimeout(() => {
-            this.$router.push('/')
-            }, 1000);
-          } 
-        } catch (e) {
-          console.error('❌ Ошибка парсинга JSON:', e);
-          this.response = textResponse;
-        }
-        
-        this.error = null;
-      } catch (err) {
-        console.error('❌ Ошибка запроса:', err);
-        this.error = err.message;
+    async goBack() {
+      this.loading = true;
+      const loaded = await this.isloadedForward();
+      if (loaded === true) {
+        this.loading = false;
+        setTimeout(() => {
+          this.$router.push('/authcard');
+        }, 500);
       }
-    },
-    
-    handleFileUpload(event) {
-      this.selectedFile = event.target.files[0];
-      this.fileName = this.selectedFile ? this.selectedFile.name : '';
-    },
-    
-
-    async senasdGetRequest() {
-
-      if (!this.selectedFile) {
-            this.responseAnalysis = "Сначала выберите файл";
-            return;
-        }
-        const formData = new FormData();
-        formData.append('fileToUpload', this.selectedFile);
-
-        fetch('http://localhost/colos/php_pics.php', {
-          method: 'POST',
-          credentials: 'include',
-          body: formData
-        })
-        .then(responseAnalysis => {
-            if (!responseAnalysis.ok) {
-                throw new Error(`HTTP error! status: ${responseAnalysis.status}`);
-            }
-            return responseAnalysis.json();
-          })
-            .then(data => {
-            if (data && typeof data === 'object') {
-                this.responseAnalysis = data.success 
-                    ? "Файл успешно загружен" 
-                    : (data.message || "Ошибка загрузки");
-                
-              
-            } else {
-                throw new Error('Непредвиденная ошибка');
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            this.responseAnalysis = "Ошибка: " + error.message;
-            
-        });
     }
   }
 }
 </script>
 
 <style scoped>
-@import '@/assets/styles/auth-card.css';
 @import '@/assets/styles/header.css';
-@import'@/assets/styles/message.css';
-
-.file-upload-minimal {
-  margin: 1rem 0;
+.band-header {
+  width: 100%;
+  background: #f5f5f5;
+  border-bottom: 1px solid #e0e0e0;
 }
 
-.file-input {
-  display: none;
+.site-header {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
 }
 
-.file-label {
-  display: block;
+.header-left {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+}
+
+.header-title {
+  flex: 2;
+  text-align: center;
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.header-right {
+  flex: 1;
+}
+
+/* Кнопки без стилей (минимальные) */
+.nav-button {
+  background: none;
+  border: none;
   cursor: pointer;
+  font-size: 1rem;
+  padding: 0;
+  margin: 0;
 }
 
-.file-label-content {
+.nav-button:hover {
+  /* Легкое затемнение при наведении, но без стилей */
+  opacity: 0.7;
+}
+
+/* Анимация переходов */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+.auth-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #0a800a, #1e3a1e);;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 60px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: 0.5rem;
+  letter-spacing: 0.3px;
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(145deg, #f0f4f0 0%, #e2e8e0 100%);
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  transition: all 0.2s;
+  justify-content: center;
+  gap: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
 }
 
-.file-label-content:hover { 
-  border-color: #4c7a3a;
-  background: #f0fdf4;
+.auth-btn:hover:not(:disabled) {
+  background: #1f481d;
+  transform: scale(0.98);
 }
 
-.file-icon {
-  font-size: 1.2rem;
+.auth-btn:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
-.file-text {
-  flex: 1;
-  font-size: 0.9rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.auth-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
-
-.file-browse {
-  color: #4c7a3a;
-  font-weight: 500;
-  font-size: 0.9rem;
-  padding: 0.25rem 0.75rem;
-  background: white;
-  border-radius: 0.5rem;
-  transition: all 0.2s;
-}
-
-.file-label-content:hover .file-browse {
-  background: #4c7a3a;
-  color: white;
-}
-
 .auth-container {
-  flex: 1;
   display: flex;
   justify-content: center;
-  align-items: flex-start;
-  min-height: calc(95vh - 100px);     
+  align-items: center;
   padding: 1rem;
-  margin-top: 40px;
+  margin-bottom: 2rem;
 }
 
-.auth-card {
+.horizontal-card {
+  max-width: 1200px;
   width: 100%;
-  max-width: 900px;
-  aspect-ratio: 16 / 9;
+  min-height: 400px;
+
   background: #ffffff;
   border-radius: 2rem;
-  box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+}
+
+.auth-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2d3748;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.horizontal-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.example-image-horizontal {
+  width: 400px;
+  height: auto;
+  max-width: 100%;
+  border-radius: 1rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+}
+
+.example-image-horizontal:hover {
+  transform: scale(1.02);
+}
+
+.description-text-horizontal {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #4a5568;
+  font-weight: normal;
+  margin: 0;
+  flex: 1;
+  min-width: 250px;
+}
+
+.text-group {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
-  padding: 2rem 2rem 2.5rem;
-  overflow-y: auto;
+  gap: 1rem;
+}
+
+.highlight {
+  color: #4c7a3a;
+  font-weight: 500;
+  background: #f0fdf4;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .horizontal-content {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .example-image-horizontal {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .description-text-horizontal {
+    text-align: center;
+  }
+  
+  .auth-title {
+    font-size: 1.2rem;
+  }
 }
 </style>

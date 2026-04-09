@@ -5,7 +5,6 @@
         <h1>Colos - simple food analysis</h1>
       </header>
     </div>
-    
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
         <component :is="Component" />
@@ -23,6 +22,7 @@ export default {
 <style>
 @import '@/assets/styles/header.css';
 /* Глобальные стили для переходов */
+
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;

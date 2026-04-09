@@ -200,7 +200,7 @@ export default {
           this.confirmPassword = '';
           this.agreeTerms = false;
             setTimeout(() => {
-            this.$router.push('/')
+            this.$router.push('/authcard')
             }, 500);
           
         } else {
@@ -231,7 +231,7 @@ export default {
   },
     
     goBack() {
-      this.$router.push('/');
+      this.$router.push('/authcard');
     },
     
     showTerms() {

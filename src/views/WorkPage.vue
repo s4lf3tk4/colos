@@ -66,7 +66,7 @@ export default {
     await this.check_auth();
    this.sessionCheckInterval = setInterval(() => {
     this.check_session_time();
-  }, 500);
+  }, 5000);
   },
   beforeUnmount() {
   if (this.sessionCheckInterval) {

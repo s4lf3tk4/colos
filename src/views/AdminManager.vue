@@ -2,8 +2,8 @@
   <div name="WorkPage">
     <div class="band-header">
       <header class="site-header">
-        <div v-if="response && response.auth === true">
-          <h1> Hello, {{ response.username }}!</h1>
+        <div>
+          <h1>Панель админимтратора</h1>
         </div>
       </header>
     </div>
@@ -77,7 +77,7 @@ export default {
     await this.check_auth();
     this.sessionCheckInterval = setInterval(() => {
       this.check_session_time();
-    }, 500);
+    }, 5000);
   },
   beforeUnmount() {
     if (this.sessionCheckInterval) {
@@ -356,8 +356,6 @@ async changePassword() {
         this.error = err.message;
       }
     },
-
-    // остальные методы (check_session_time, check_auth, senasdGetRequest, handleFileUpload – оставляем без изменений)
 
   }
 }

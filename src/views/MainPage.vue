@@ -1,4 +1,5 @@
 <template>
+  <div>
   <div class="auth-container">
     <div class="auth-card horizontal-card">
       <div class="auth-title">✅ Colos - использование лучшего ПО для персонализированного питания</div>
@@ -21,20 +22,21 @@
           <h2 class="description-text-horizontal">Все легко и просто, не требует особых знаний и самостоятельных расчетов! Мы сделаем все за вас 🤗</h2>
            <div class="button-group">
      </div>
-     <button type="submit" class="auth-btn login-btn" :disabled="loading">
+     <button type="submit" @click = "goAuth()"class="auth-btn login-btn" :disabled="loading">
             <span>🔐</span> 
              Начать сейчас
           </button>
         </div>
-        <img src="/src/images/example1.png" alt="Пример анализа питания" class="example-image-horizontal">
+        <img src="/src/images/example1.jpg" alt="Пример анализа питания" class="example-image-horizontal">
       </div>
     </div>
+  </div>
   </div>
 </template>
 
 <script>
 export default {
-  name: 'AuthCard',
+  name: 'MainPage',
   data() {
     return {
       loading: false,
@@ -45,7 +47,7 @@ export default {
       const component = await import('../views/AuthCard.vue');
       return true;
     },
-    async goBack() {
+    async goAuth() {
       this.loading = true;
       const loaded = await this.isloadedForward();
       if (loaded === true) {

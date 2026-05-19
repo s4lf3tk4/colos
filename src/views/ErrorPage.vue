@@ -26,7 +26,7 @@
 
 <script>
 export default {
-  name: 'AuthCard',
+  name: 'ErrorPage',
   data() {
     return {
         loading: false,

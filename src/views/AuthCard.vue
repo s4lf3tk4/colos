@@ -73,7 +73,9 @@ export default {
     }
   },
   async mounted() {
+    
     await this.check_auth();
+    
   },
   methods: {
       async goForward(){
@@ -169,21 +171,31 @@ async isloadedForward() {
             this.formData = { username: '', password: '' };
             this.showMessage(data.message || '✅ Успешный вход!', 'success');
             try{
-
-            const loaded = await this.isloadedForward();
-            if (loaded === true){
-                  setTimeout(() => {
-                    this.$router.push('/workpage');
-                  }, 500);
-            }
-         
+              
+              if (data.station == 'guest'){
+                const loaded = await this.isloadedForward();
+                if (loaded === true){
+                  
+                      setTimeout(() => {
+                        this.$router.push('/workpage');
+                      }, 500);
+                }
+              }else if (data.station == 'admin'){
+                
+                      setTimeout(() => {
+                        this.$router.push('/adminmanager');
+                      }, 500);
+                
+              }
+              else if(data.station == 'prem'){
+                    setTimeout(() => {
+                        this.$router.push('/workpage');
+                      }, 500);
+              }
           }
-
           catch(error){
             this.showMessage(data.message || 'НЕ Успешный вход!', 'error');
           }
-
-          
           
         } else {
           this.showMessage(data.message || '❌ Ошибка авторизации', 'error');

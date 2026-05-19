@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AuthCard from '../views/AuthCard.vue'
 
 const routes = [
-  {
+   {
     path: '/authcard',
     name: 'AuthCard',
      component: () => import('../views/AuthCard.vue'),
@@ -11,6 +11,25 @@ const routes = [
       transitionDelay: 100
     }
   },
+  {
+    path: '/admin',
+    name: 'Admin',
+     component: () => import('../views/Admin.vue'),
+      meta: {
+       transition: 'slide',
+      transitionDelay: 100
+    }
+  },
+    {
+    path: '/adminmanager',
+    name: 'Manage',
+     component: () => import('../views/AdminManager.vue'),
+      meta: {
+       transition: 'slide',
+      transitionDelay: 100
+    }
+  },
+
   {
     path: '/register',
     name: 'Register',
@@ -30,7 +49,7 @@ const routes = [
     }
   },
     {
-    path: '/mainpage',
+    path: '/',
     name: 'MainPage',
      component: () => import('../views/MainPage.vue'),
       meta: {

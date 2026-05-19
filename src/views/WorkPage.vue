@@ -26,6 +26,9 @@
           </div>
         </label>
       </div>
+       <div v-if="imagePreviewUrl" class="image-preview">
+        <img :src="imagePreviewUrl" alt="Preview" />
+      </div>
       
       <div class="button-group">
         <button type="submit" @click="senasdGetRequest()" class="auth-btn register-submit-btn" :disabled="loading">
@@ -34,13 +37,9 @@
 
         </button>
       </div>
-        <div>
-        {{ responseAnalysis}}
-                  <button @click="goPy">
-            Отправить
-          </button>
-          {{ responsePy}}
-      </div>    
+      <div v-if="responseAnalysis" class="response-message">
+      {{ responseAnalysis }}
+        </div>
     </div>
   </div>
 </div>
@@ -59,7 +58,8 @@ export default {
       fileName: '',
       responseAnalysis: null,
       responsePy: null,
-      sessionCheckInterval: null
+      sessionCheckInterval: null,
+      analysisResult: null,
     }
   },
   async mounted() {
@@ -75,6 +75,46 @@ export default {
 },
 
   methods: {
+      async senasdGetRequest() {
+    if (!this.selectedFile) {
+      this.responseAnalysis = "Сначала выберите файл";
+      return;
+    }
+    this.loading = true;
+    this.responseAnalysis = null;
+    this.analysisResult = null;
+
+    const formData = new FormData();
+    formData.append('fileToUpload', this.selectedFile);
+
+    try {
+      const response = await fetch('http://localhost/colos/php_pics.php', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData
+      });
+
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      const data = await response.json();
+
+      if (data.isloaded) {
+        if (data.ai_response && data.ai_response.ingredients) {
+          this.responseAnalysis = data.ai_response.description || 'Анализ выполнен';
+          this.analysisResult = data.ai_response;
+        } else {
+          this.responseAnalysis = data.message || 'Файл загружен, но анализ не вернул данных';
+        }
+      } else {
+        this.responseAnalysis = data.message || 'Ошибка загрузки';
+      }
+    } catch (err) {
+      console.error(err);
+      this.responseAnalysis = 'Ошибка: ' + err.message;
+    } finally {
+      this.loading = false;
+    }
+  },
     async check_session_time(){
 try {
         const url = 'http://localhost/colos/session_time.php';
@@ -87,7 +127,7 @@ try {
           }
           
         });
-        const jsonData = await fetchResponse.json(); // Прямое получение JSON
+        const jsonData = await fetchResponse.json();
       this.response = jsonData;
 
       if (jsonData.auth === false) {
@@ -99,36 +139,6 @@ try {
       console.error('Ошибка запроса:', err);
       // Опционально: показать уведомление об ошибке сети
     }
-    },
-    async goPy() {
-        const url = 'http://localhost/colos/bridge.php';
-        
-        try {
-            const fetchResponse = await fetch(url, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({text: 'Привет из Vue!'})
-            });
-
-            const text = await fetchResponse.text();
-            let jsonData;
-            try {
-                jsonData = JSON.parse(text);
-            } catch(e) {
-                this.responsePy = 'Ошибка: не JSON';
-                return;
-            }
-            
-            if (jsonData && jsonData.reply) {
-                this.responsePy = jsonData.reply;
-            } else {
-                this.responsePy = 'Ошибка: нет reply';
-            }
-            
-        } catch (error) {
-            console.error('❌ Ошибка в catch:', error);
-            this.responsePy = 'Ошибка: ' + error.message;
-        }
     },
     async check_auth() {
       try {
@@ -166,48 +176,22 @@ try {
     },
     
     handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      this.selectedFile = file;
+      this.fileName = file.name;
+      
+      if (this.imagePreviewUrl) {
+        URL.revokeObjectURL(this.imagePreviewUrl);
+      }
+      
+      this.imagePreviewUrl = URL.createObjectURL(file);
+    
       this.selectedFile = event.target.files[0];
       this.fileName = this.selectedFile ? this.selectedFile.name : '';
     },
     
-
-    async senasdGetRequest() {
-
-      if (!this.selectedFile) {
-            this.responseAnalysis = "Сначала выберите файл";
-            return;
-        }
-        const formData = new FormData();
-        formData.append('fileToUpload', this.selectedFile);
-
-        fetch('http://localhost/colos/php_pics.php', {
-          method: 'POST',
-          credentials: 'include',
-          body: formData
-        })
-        .then(responseAnalysis => {
-            if (!responseAnalysis.ok) {
-                throw new Error(`HTTP error! status: ${responseAnalysis.status}`);
-            }
-            return responseAnalysis.json();
-          })
-            .then(data => {
-            if (data && typeof data === 'object') {
-                this.responseAnalysis = data.success 
-                    ? "Файл успешно загружен" 
-                    : (data.message || "Ошибка загрузки");
-                
-              
-            } else {
-                throw new Error('Непредвиденная ошибка');
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка:', error);
-            this.responseAnalysis = "Ошибка: " + error.message;
-            
-        });
-    }
   }
 }
 </script>
@@ -216,6 +200,18 @@ try {
 @import '@/assets/styles/auth-card.css';
 @import '@/assets/styles/header.css';
 @import'@/assets/styles/message.css';
+.image-preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.image-preview img {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e2e8f0;
+}
 .site-header h1 {
   display: flex;
   color: rgb(0, 0, 0);

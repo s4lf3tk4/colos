@@ -1,103 +1,333 @@
 <template>
-  <div id="app">
-    <div class="band-header">
+ <div name="WorkPage">
+  <div class="band-header">
       <header class="site-header">
-        <h1 class="header-title">Colos - simple food analysis</h1>
-        <div class="header-right">
-          <button @click="goToHome">Главная</button>
-          <button @click="goToProfile">Профиль</button>
-          <button @click="logout">Выйти</button>
+        <div v-if="response && response.auth === true">
+        <h1> Hello, {{ response.username }}!</h1>
         </div>
+
       </header>
     </div>
-    <router-view v-slot="{ Component }">
-      <transition name="fade" mode="out-in">
-        <component :is="Component" />
-      </transition>
-    </router-view>
+        
+  <div class="auth-container">
+    <div class="auth-card">
+      <div class="file-upload-minimal">
+
+          <p>ПАНЕЛЬ АДМИНА</p>
+            <p><input v-model="newUser.username" placeholder="Логин" /></p>
+            <p><input v-model="newUser.password" placeholder="Пароль" /></p>
+            <p><input v-model="newUser.email" placeholder="Почта" /></p>
+
+            <p><select>
+              <option station="guest">Статус guest</option> 
+              <option station="admin">Статус admin</option>
+              <option station="prem">Статус на prem</option>
+              <option station="none">Не выбран</option>
+            </select></p>
+            <p><select>
+              <option inchange="pass">Изменить пароль на</option> 
+              <option inchange="add">Добавить пользователя</option>
+              <option inchange="stat">Изменить статус на выбранный</option>
+              <option inchange="del">Удалить пользователя</option>
+              
+            </select></p>
+           <p> <button @click="changeUser()">
+                Внести изменения
+            </button></p>
+            <p><div v-if="message" :class="['message', messageType]">
+          {{ message }}
+        </div></p>
+      </div>
+    </div>
   </div>
+</div>
+
+
 </template>
 
+
 <script>
+import { handleError } from 'vue';
+
 export default {
-  name: 'App',
-  methods: {
-    goToHome() {
-      this.$router.push('/');
-    },
-    goToProfile() {
-      this.$router.push('/profile');
-    },
-    logout() {
-      localStorage.removeItem('token');
-      this.$router.push('/login');
+  data() {
+    return {
+      inchange: '',
+      message: '',
+      messageType: '',
+      response: null,
+      error: null,
+      loading: false,
+      selectedFile: null,
+      fileName: '',
+      responseAnalysis: null,
+      responsePy: null,
+      sessionCheckInterval: null,
+      analysisResult: null,
+
+      newUser: {
+        username: '',
+        password: '',
+        email: '',
+        status: ''
+      },
+    
     }
+  },
+  async mounted() {
+    await this.check_auth();
+   this.sessionCheckInterval = setInterval(() => {
+    this.check_session_time();
+  }, 500);
+  },
+  beforeUnmount() {
+  if (this.sessionCheckInterval) {
+    clearInterval(this.sessionCheckInterval);
+  }
+},
+
+  methods: {
+
+    async changeUser(inchange){
+        switch (inchange){
+            case 'add': 
+            if (this.newUser.username != '' && 
+            this.newUser.password != '' && 
+            this.newUser.email != '') this.handleRegister();
+
+            
+        }
+                   
+},
+showMessage(text, type) {
+    this.message = text;
+    this.messageType = type;
+  },
+ async handleRegister() {
+    const params = new URLSearchParams();
+    params.append('name', this.newUser.name);
+    params.append('email', this.newUser.email);
+    params.append('password', this.newUser.password);
+
+    try {
+        const fetchResponse = await fetch('http://localhost/colos/php_mysql.php', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: params
+        });
+        
+        if (!fetchResponse.ok) {
+          throw new Error(`HTTP ошибка: ${fetchResponse.status}`);
+        }
+        
+        const data = await fetchResponse.json();
+        this.response = data;
+        
+        if (data.status === 'success') {
+          this.showMessage('✅ Регистрация успешна!', 'success');
+        }
+        else {
+          this.showMessage('❌ Ошибка регистрации', 'error');
+        }
+    }catch{
+        
+    }
+
+
+ },
+    async check_session_time(){
+        try {
+            const url = 'http://localhost/colos/session_time.php';
+            
+            const fetchResponse = await fetch(url, {
+            method: 'GET',
+            credentials: 'include',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+            
+            });
+            const jsonData = await fetchResponse.json();
+        this.response = jsonData;
+
+        if (jsonData.auth === false) {
+            this.$router.push('/errorpage');
+        }
+
+        this.error = null;
+    } catch (err) {
+      console.error('Ошибка запроса:', err);
+    }
+    },
+    async check_auth() {
+      try {
+        const url = 'http://localhost/colos/check_auth.php';
+        
+        const fetchResponse = await fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+          
+        });
+        
+        const textResponse = await fetchResponse.text();
+        try {
+          const jsonData = JSON.parse(textResponse);
+          this.response = jsonData;
+          
+          if (jsonData.auth === false || jsonData.station != 'admin') {
+            this.$router.push('/authcard')
+          } 
+        } catch (e) {
+          console.error('❌ Ошибка парсинга JSON:', e);
+          this.response = textResponse;
+        }
+        
+        this.error = null;
+      } catch (err) {
+        console.error('❌ Ошибка запроса:', err);
+        this.error = err.message;
+      }
+    },
+    
   }
 }
 </script>
 
-<style>
-.band-header {
-  width: 100%;
-  border-bottom: 1px solid #ddd;
-}
-
-.site-header {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 15px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.header-title {
-  grid-column: 2;
-  margin: 0;
+<style scoped>
+@import '@/assets/styles/auth-card.css';
+@import '@/assets/styles/header.css';
+@import'@/assets/styles/message.css';
+.image-preview {
+  margin-top: 1rem;
   text-align: center;
-  font-size: 1.3rem;
-  font-weight: 500;
 }
 
-.header-right {
-  grid-column: 3;
+.image-preview img {
+  max-width: 100%;
+  max-height: 250px;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  border: 1px solid #e2e8f0;
+}
+.site-header h1 {
   display: flex;
-  justify-content: flex-end;
-  gap: 15px;
-}
-
-.header-right button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-}
-
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
+  color: rgb(0, 0, 0);
+  font-size: 26px;
+  margin: 0;  
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  align-self: center;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  background: linear-gradient(135deg, #0a800a, #1e3a1e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  position: static;
+  transform: none;
+  
+  animation: floatUp 0.8s cubic-bezier(0.2, 0.9, 0.4, 1.1) forwards;
   opacity: 0;
+  transform: translateY(20px);
 }
 
-@media (max-width: 768px) {
-  .site-header {
-    padding: 10px;
+
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateY(50px);
   }
-  
-  .header-title {
-    font-size: 1rem;
+  100% {
+    opacity: 1;
+    transform: translateY(0);
   }
-  
-  .header-right button {
-    font-size: 0.85rem;
-  }
-  
-  .header-right {
-    gap: 8px;
-  }
+}
+
+.file-upload-minimal {
+  margin: 1rem 0;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-label {
+  display: block;
+  cursor: pointer;
+}
+
+.file-label-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(145deg, #f0f4f0 0%, #e2e8e0 100%);
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  transition: all 0.2s;
+}
+
+.file-label-content:hover { 
+  border-color: #4c7a3a;
+  background: #f0fdf4;
+}
+
+.file-icon {
+  font-size: 1.2rem;
+}
+
+.file-text {
+  flex: 1;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-browse {
+  color: #4c7a3a;
+  font-weight: 500;
+  font-size: 0.9rem;
+  padding: 0.25rem 0.75rem;
+  background: white;
+  border-radius: 0.5rem;
+  transition: all 0.2s;
+}
+
+.file-label-content:hover .file-browse {
+  background: #4c7a3a;
+  color: white;
+}
+
+.auth-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: calc(95vh - 100px);     
+  padding: 1rem;
+  margin-top: 40px;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 900px;
+  aspect-ratio: 16 / 9;
+  background: #ffffff;
+  border-radius: 2rem;
+  box-shadow: 0 25px 45px -12px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 2rem 2rem 2.5rem;
+  overflow-y: auto;
 }
 </style>

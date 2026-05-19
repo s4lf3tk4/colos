@@ -169,7 +169,7 @@ export default {
         return;
       }
 
-      // ✅ Исправлено: создаем params правильно
+
       const params = new URLSearchParams();
       params.append('name', this.formData.name);
       params.append('email', this.formData.email);

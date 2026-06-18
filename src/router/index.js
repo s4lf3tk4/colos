@@ -11,15 +11,7 @@ const routes = [
       transitionDelay: 100
     }
   },
-  {
-    path: '/admin',
-    name: 'Admin',
-     component: () => import('../views/Admin.vue'),
-      meta: {
-       transition: 'slide',
-      transitionDelay: 100
-    }
-  },
+
     {
     path: '/adminmanager',
     name: 'Manage',

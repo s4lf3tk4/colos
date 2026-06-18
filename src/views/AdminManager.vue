@@ -7,7 +7,7 @@
         </div>
       </header>
     </div>
-
+  <button @click="logout()">Выход</button> 
     <div class="auth-container">
       <div class="auth-card">
         <div class="file-upload-minimal">
@@ -59,7 +59,6 @@ export default {
       selectedFile: null,
       fileName: '',
       responseAnalysis: null,
-      responsePy: null,
       sessionCheckInterval: null,
       analysisResult: null,
 
@@ -85,6 +84,27 @@ export default {
     }
   },
   methods: {
+        async logout(){
+      const url = 'http://localhost/colos/logout.php';
+        
+        const fetchResponse = await fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+          
+        });
+        const jsonData = await fetchResponse.json();
+      this.response = jsonData;
+
+      if (jsonData.logout === true) {
+          setTimeout(() => {
+            this.$router.push('/authcard')
+          }, 500);
+      }
+
+    },
     async changeUser() {
       switch (this.selectedAction) {
         case 'add':

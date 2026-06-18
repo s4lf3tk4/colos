@@ -109,9 +109,23 @@ export default {
           const jsonData = JSON.parse(textResponse);
           this.response = jsonData;
           if (jsonData.auth === true) {
-            setTimeout(() => {
-                    this.$router.push('/workpage');
-                  }, 500);
+            if (jsonData.station == 'admin'){
+                
+              setTimeout(() => {
+                this.$router.push('/adminmanager');
+                }, 700);
+            }
+            else if (jsonData.station == 'guest'){      
+              setTimeout(() => {
+                this.$router.push('/workpage');
+              }, 700);
+             }
+            else if (jsonData.station == 'prem'){      
+              setTimeout(() => {
+                this.$router.push('/workpage');
+              }, 700);
+             }
+
           }
         } catch (e) {
           console.log("нет активной сессии")
@@ -188,6 +202,7 @@ async isloadedForward() {
                 
               }
               else if(data.station == 'prem'){
+                const loaded = await this.isloadedForward();
                     setTimeout(() => {
                         this.$router.push('/workpage');
                       }, 500);

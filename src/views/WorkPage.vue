@@ -1,13 +1,13 @@
 <template>
  <div name="WorkPage">
   <div class="band-header">
-      <header class="site-header">
-        <div v-if="response && response.auth === true">
-        <h1> Hello, {{ response.username }}!</h1>
-        </div>
-
-      </header>
-    </div>
+    <header class="site-header">
+      <div v-if="response && response.auth === true" class="header-content">
+        <h1>Hello, {{ response.username }}!</h1>
+      </div>
+    </header>
+  </div>
+  <button @click="logout()">Выход</button> 
     
   <div class="auth-container">
     <div class="auth-card">
@@ -57,7 +57,7 @@ export default {
       selectedFile: null,
       fileName: '',
       responseAnalysis: null,
-      responsePy: null,
+      // responsePy: null,
       sessionCheckInterval: null,
       analysisResult: null,
     }
@@ -75,6 +75,30 @@ export default {
 },
 
   methods: {
+
+    async logout(){
+      const url = 'http://localhost/colos/logout.php';
+        
+        const fetchResponse = await fetch(url, {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+          
+        });
+        const jsonData = await fetchResponse.json();
+      this.response = jsonData;
+
+      if (jsonData.logout === true) {
+          setTimeout(() => {
+            this.$router.push('/authcard')
+          }, 500);
+      }
+
+    },
+
+
       async senasdGetRequest() {
     if (!this.selectedFile) {
       this.responseAnalysis = "Сначала выберите файл";
@@ -200,6 +224,10 @@ try {
 @import '@/assets/styles/auth-card.css';
 @import '@/assets/styles/header.css';
 @import'@/assets/styles/message.css';
+
+
+
+
 .image-preview {
   margin-top: 1rem;
   text-align: center;
